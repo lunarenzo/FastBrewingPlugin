@@ -10,6 +10,8 @@ public record FastBrewingConfig(
     boolean enabled,
     boolean instantBrewing,
     int brewTimeTicks,
+    boolean permissionRequired,
+    String permission,
     boolean allowAllWorlds,
     Set<String> allowedWorlds
 ) {

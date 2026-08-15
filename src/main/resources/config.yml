@@ -1,6 +1,20 @@
 # FastBrewing Configuration
+
+# Global toggle for the plugin feature
 enabled: true
+
+# Instant brewing mode (1 tick / 0.05s). Overrides brew-time-ticks when true.
 instant-brewing: false
+
+# Custom brewing duration in ticks (20 ticks = 1 second). Vanilla is 400 ticks (20 seconds).
 brew-time-ticks: 20
+
+# Require permission node for fast brewing
+permission-required: false
+
+# Permission node required when permission-required is set to true
+permission: "fastbrewing.use"
+
+# List of worlds where fast brewing is enabled. Use "*" for all worlds.
 allowed-worlds:
   - "*"

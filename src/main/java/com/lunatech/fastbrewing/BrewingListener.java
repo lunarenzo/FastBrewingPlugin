@@ -2,6 +2,7 @@ package com.lunatech.fastbrewing;
 
 import org.bukkit.block.Block;
 import org.bukkit.block.BrewingStand;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -9,11 +10,11 @@ import org.bukkit.event.block.BrewingStartEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.persistence.PersistentDataType;
 
 public final class BrewingListener implements Listener {
 
     private final FastBrewingPlugin plugin;
-    private boolean paperNativeActive = false;
 
     public BrewingListener(FastBrewingPlugin plugin) {
         this.plugin = plugin;
@@ -23,10 +24,15 @@ public final class BrewingListener implements Listener {
     public void onBrewingStart(BrewingStartEvent event) {
         FastBrewingConfig cfg = plugin.getBrewingConfig();
         if (!cfg.enabled()) return;
-        paperNativeActive = true;
 
         Block block = event.getBlock();
         if (block != null && cfg.isWorldAllowed(block.getWorld().getName())) {
+            if (cfg.permissionRequired() && block.getState() instanceof BrewingStand stand) {
+                byte allowed = stand.getPersistentDataContainer().getOrDefault(plugin.getPermissionKey(), PersistentDataType.BYTE, (byte) 1);
+                if (allowed == (byte) 0) {
+                    return; // Player lacks permission to accelerate brewing
+                }
+            }
             event.setBrewingTime(cfg.getTargetTicks());
         }
     }
@@ -34,22 +40,16 @@ public final class BrewingListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
         FastBrewingConfig cfg = plugin.getBrewingConfig();
-        if (!cfg.enabled() || paperNativeActive) return;
+        if (!cfg.enabled()) return;
 
         Inventory inv = event.getInventory();
         if (inv.getType() != InventoryType.BREWING) return;
 
         if (inv.getHolder() instanceof BrewingStand stand) {
-            int currentBrewTime = stand.getBrewingTime();
-            if (currentBrewTime == 0 || currentBrewTime == 400) {
-                if (cfg.isWorldAllowed(stand.getWorld().getName())) {
-                    FoliaScheduler.runRegionTask(plugin, stand.getLocation(), () -> {
-                        if (stand.getBrewingTime() > cfg.getTargetTicks()) {
-                            stand.setBrewingTime(cfg.getTargetTicks());
-                            stand.update(true, false);
-                        }
-                    });
-                }
+            if (cfg.permissionRequired() && event.getWhoClicked() instanceof Player player) {
+                byte isAllowed = player.hasPermission(cfg.permission()) ? (byte) 1 : (byte) 0;
+                stand.getPersistentDataContainer().set(plugin.getPermissionKey(), PersistentDataType.BYTE, isAllowed);
+                stand.update(true, false);
             }
         }
     }

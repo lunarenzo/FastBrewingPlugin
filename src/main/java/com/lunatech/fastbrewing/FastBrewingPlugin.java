@@ -1,5 +1,6 @@
 package com.lunatech.fastbrewing;
 
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -9,9 +10,11 @@ import java.util.HashSet;
 public final class FastBrewingPlugin extends JavaPlugin {
 
     private volatile FastBrewingConfig config;
+    private NamespacedKey permissionKey;
 
     @Override
     public void onEnable() {
+        this.permissionKey = new NamespacedKey(this, "allowed");
         saveDefaultConfig();
         reloadPluginConfig();
 
@@ -26,17 +29,23 @@ public final class FastBrewingPlugin extends JavaPlugin {
         boolean enabled = getConfig().getBoolean("enabled", true);
         boolean instantBrewing = getConfig().getBoolean("instant-brewing", false);
         int brewTimeTicks = getConfig().getInt("brew-time-ticks", 20);
-        var worldsList = getConfig().getStringList("allowed-worlds");
+        boolean permRequired = getConfig().getBoolean("permission-required", false);
+        String permNode = getConfig().getString("permission", "fastbrewing.use");
 
+        var worldsList = getConfig().getStringList("allowed-worlds");
         boolean allowAll = worldsList == null || worldsList.contains("*");
         var worldsSet = allowAll ? null : new HashSet<>(worldsList);
 
         // Atomic lock-free pointer swap
-        this.config = new FastBrewingConfig(enabled, instantBrewing, brewTimeTicks, allowAll, worldsSet);
+        this.config = new FastBrewingConfig(enabled, instantBrewing, brewTimeTicks, permRequired, permNode, allowAll, worldsSet);
     }
 
     public FastBrewingConfig getBrewingConfig() {
         return config;
+    }
+
+    public NamespacedKey getPermissionKey() {
+        return permissionKey;
     }
 
     @Override
