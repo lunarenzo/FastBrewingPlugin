@@ -1,0 +1,6 @@
+# FastBrewing Configuration
+enabled: true
+instant-brewing: false
+brew-time-ticks: 20
+allowed-worlds:
+  - "*"
