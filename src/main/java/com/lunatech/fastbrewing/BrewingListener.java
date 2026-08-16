@@ -47,7 +47,12 @@ public final class BrewingListener implements Listener {
                     }
                 }
             }
-            event.setBrewingTime(cfg.getTargetTicks());
+
+            try {
+                event.setBrewingTime(cfg.getTargetTicks());
+            } catch (NoSuchMethodError e) {
+                event.setTotalBrewTime(cfg.getTargetTicks());
+            }
         }
     }
 
